@@ -8,7 +8,7 @@ from datetime import datetime
 import matplotlib.dates as mdates
 import folium
 from streamlit_folium import st_folium
-from streamlit_leaflet import st_leaflet, leaflet
+
 
 # ----------------------------
 # App configuration
@@ -79,25 +79,44 @@ if "fetch_summary" not in st.session_state:
 
 st.subheader("🌍 Click on the map to select a location")
 
-# Initialize map center
-map_center = [st.session_state.lat, st.session_state.lon]
+# Build map centered at stored coordinates
+m = folium.Map(
+    location=[st.session_state.lat, st.session_state.lon],
+    zoom_start=5,
+    control_scale=True,
+    tiles="CartoDB positron"
+)
 
-# Build map
-m = leaflet.Map(center=map_center, zoom=5, scroll_wheel_zoom=True)
-m.add_layer(leaflet.TileLayer(url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution="© OpenStreetMap"))
+# Add marker
+marker = folium.Marker(
+    [st.session_state.lat, st.session_state.lon],
+    popup=f"Selected: {st.session_state.lat:.6f}, {st.session_state.lon:.6f}",
+    icon=folium.Icon(color="blue", icon="map-marker", prefix="fa"),
+)
+marker.add_to(m)
 
-# Add marker to show current location
-marker = leaflet.Marker(location=map_center)
-m.add_layer(marker)
+# Render map — fast refresh only for marker updates
+map_data = st_folium(m, width=950, height=500)
 
-# Render the map and handle clicks instantly
-clicked = st_leaflet(m, key="map", height=500)
+# Update coords immediately on click
+if map_data and map_data.get("last_clicked"):
+    clicked = map_data["last_clicked"]
+    new_lat = float(clicked["lat"])
+    new_lon = float(clicked["lng"])
+    if (new_lat != st.session_state.lat) or (new_lon != st.session_state.lon):
+        st.session_state.lat = new_lat
+        st.session_state.lon = new_lon
 
-# When map clicked, update marker and session state instantly
-if clicked and "last_clicked" in clicked and clicked["last_clicked"]:
-    st.session_state.lat = clicked["last_clicked"]["lat"]
-    st.session_state.lon = clicked["last_clicked"]["lng"]
-
+# Show coords in a styled info box
+st.markdown(
+    f"""
+    <div style="background-color:#d4edda;border-radius:10px;padding:10px;text-align:center;">
+        📍 <b>Latitude:</b> {st.session_state.lat:.6f} &nbsp;&nbsp;
+        <b>Longitude:</b> {st.session_state.lon:.6f}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 # Show coords under the map in a green box
 st.success(f"📍 Selected Latitude: {st.session_state.lat:.6f} , Longitude: {st.session_state.lon:.6f}")
 
@@ -247,6 +266,7 @@ if st.session_state.get("all_data"):
 # ----------------------------
 st.markdown("---")
 st.markdown("<center>Made by Vivan Kapileshwarkar</center>", unsafe_allow_html=True)
+
 
 
 
