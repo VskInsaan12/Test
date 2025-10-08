@@ -79,35 +79,24 @@ if "fetch_summary" not in st.session_state:
 
 st.subheader("🌍 Click on the map to select a location")
 
-# Build map centered at stored coordinates
-m = folium.Map(
-    location=[st.session_state.lat, st.session_state.lon],
-    zoom_start=5,
-    control_scale=True,
-    tiles="CartoDB positron"
-)
+from leafmap.foliumap import Map
 
-# Add marker
-marker = folium.Marker(
-    [st.session_state.lat, st.session_state.lon],
-    popup=f"Selected: {st.session_state.lat:.6f}, {st.session_state.lon:.6f}",
-    icon=folium.Icon(color="blue", icon="map-marker", prefix="fa"),
-)
-marker.add_to(m)
+# initialize map at stored coordinates
+m = Map(center=(st.session_state.lat, st.session_state.lon), zoom=5)
 
-# Render map — fast refresh only for marker updates
-map_data = st_folium(m, width=950, height=500)
+# add draggable marker at current location
+marker = m.add_marker([st.session_state.lat, st.session_state.lon], draggable=True)
 
-# Update coords immediately on click
-if map_data and map_data.get("last_clicked"):
-    clicked = map_data["last_clicked"]
-    new_lat = float(clicked["lat"])
-    new_lon = float(clicked["lng"])
-    if (new_lat != st.session_state.lat) or (new_lon != st.session_state.lon):
-        st.session_state.lat = new_lat
-        st.session_state.lon = new_lon
+# listen for clicks
+clicked = m.on_click()
+if clicked:
+    st.session_state.lat = float(clicked["lat"])
+    st.session_state.lon = float(clicked["lng"])
 
-# Show coords in a styled info box
+# render map in Streamlit
+m.to_streamlit(height=500)
+
+# show coordinates below map
 st.markdown(
     f"""
     <div style="background-color:#d4edda;border-radius:10px;padding:10px;text-align:center;">
@@ -117,8 +106,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-# Show coords under the map in a green box
-st.success(f"📍 Selected Latitude: {st.session_state.lat:.6f} , Longitude: {st.session_state.lon:.6f}")
 
 # ----------------------------
 # Helper functions to fetch Meteomatics data
@@ -266,6 +253,7 @@ if st.session_state.get("all_data"):
 # ----------------------------
 st.markdown("---")
 st.markdown("<center>Made by Vivan Kapileshwarkar</center>", unsafe_allow_html=True)
+
 
 
 
