@@ -5,3 +5,4 @@ requests
 numpy
 folium
 streamlit-folium
+leafmap
