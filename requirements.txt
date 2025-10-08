@@ -1,0 +1,9 @@
+streamlit
+pandas
+matplotlib
+requests
+numpy
+folium
+streamlit-folium
+streamlit-echarts
+streamlit-leaflet
